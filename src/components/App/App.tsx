@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import ReactPaginate, { type ReactPaginateProps } from "react-paginate";
 import { fetchMovies } from "../../services/movieService";
 import type { Movie } from "../../types/movie";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
@@ -10,30 +12,36 @@ import SearchBar from "../SearchBar/SearchBar";
 import css from "./App.module.css";
 
 function App() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const handleSearch = async (query: string): Promise<void> => {
-    setMovies([]);
-    setSelectedMovie(null);
-    setIsError(false);
-    setIsLoading(true);
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["movies", query, page],
+    queryFn: () => fetchMovies({ query, page }),
+    enabled: query !== "",
+  });
 
-    try {
-      const results = await fetchMovies(query);
+  const movies = data?.results ?? [];
+  const totalPages = data?.total_pages ?? 0;
 
-      if (results.length === 0) {
-        toast.error("No movies found for your request.");
-      }
-
-      setMovies(results);
-    } catch {
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (data && data.results.length === 0) {
+      toast.error("No movies found for your request.");
     }
+  }, [data]);
+
+  const handleSearch = (newQuery: string): void => {
+    setQuery(newQuery);
+    setPage(1);
+    setSelectedMovie(null);
+  };
+
+  const handlePageChange: ReactPaginateProps["onPageChange"] = ({
+    selected,
+  }): void => {
+    setPage(selected + 1);
+    setSelectedMovie(null);
   };
 
   const handleCloseModal = (): void => {
@@ -48,6 +56,19 @@ function App() {
       {isError && !isLoading && <ErrorMessage />}
       {!isLoading && !isError && movies.length > 0 && (
         <MovieGrid movies={movies} onSelect={setSelectedMovie} />
+      )}
+      {totalPages > 1 && (
+        <ReactPaginate
+          pageCount={totalPages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={handlePageChange}
+          forcePage={page - 1}
+          containerClassName={css.pagination}
+          activeClassName={css.active}
+          nextLabel="→"
+          previousLabel="←"
+        />
       )}
       {selectedMovie && (
         <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
