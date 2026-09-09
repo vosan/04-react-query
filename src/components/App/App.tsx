@@ -62,9 +62,6 @@ function App() {
 
       {isLoading && <Loader />}
       {isError && !isLoading && <ErrorMessage />}
-      {!isLoading && !isError && movies.length > 0 && (
-        <MovieGrid movies={movies} onSelect={setSelectedMovie} />
-      )}
       {totalPages > 1 && (
         <ReactPaginate
           pageCount={totalPages}
@@ -77,6 +74,9 @@ function App() {
           nextLabel="→"
           previousLabel="←"
         />
+      )}
+      {!isLoading && !isError && movies.length > 0 && (
+        <MovieGrid movies={movies} onSelect={setSelectedMovie} />
       )}
       {selectedMovie && (
         <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
