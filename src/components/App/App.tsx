@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import ReactPaginate, { type ReactPaginateProps } from "react-paginate";
+import ReactPaginateModule, { type ReactPaginateProps } from "react-paginate";
 import { fetchMovies } from "../../services/movieService";
 import type { Movie } from "../../types/movie";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
@@ -10,6 +10,14 @@ import MovieGrid from "../MovieGrid/MovieGrid";
 import MovieModal from "../MovieModal/MovieModal";
 import SearchBar from "../SearchBar/SearchBar";
 import css from "./App.module.css";
+
+// Vite 8 can expose react-paginate's UMD export under a nested default.
+const ReactPaginate =
+  (
+    ReactPaginateModule as unknown as {
+      default?: typeof ReactPaginateModule;
+    }
+  ).default ?? ReactPaginateModule;
 
 function App() {
   const [query, setQuery] = useState("");
